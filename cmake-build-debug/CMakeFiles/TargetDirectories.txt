@@ -1,0 +1,4 @@
+/home/rmasl/Desktop/Evan_Personal_Use/SeniorD/mavproxy_adapter_base/mavproxy_adapter/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/rmasl/Desktop/Evan_Personal_Use/SeniorD/mavproxy_adapter_base/mavproxy_adapter/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/rmasl/Desktop/Evan_Personal_Use/SeniorD/mavproxy_adapter_base/mavproxy_adapter/cmake-build-debug/CMakeFiles/mavproxy_adapter.dir
+/home/rmasl/Desktop/Evan_Personal_Use/SeniorD/mavproxy_adapter_base/mavproxy_adapter/cmake-build-debug/CMakeFiles/client.dir
