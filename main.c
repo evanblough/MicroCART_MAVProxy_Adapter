@@ -119,17 +119,7 @@ int main(int argc, char *argv[]) {
     gcAddr.sin_addr.s_addr = inet_addr(target_ip);
     gcAddr.sin_port = htons(14550);
 
-
     for (;;) {
-        /*Send Heartbeat */
-        mavlink_msg_heartbeat_pack(254, 1, &msg, MAV_TYPE_GROUND_ROVER, MAV_AUTOPILOT_GENERIC, MAV_MODE_GUIDED_ARMED, 0,
-                                   MAV_STATE_ACTIVE);
-        len = mavlink_msg_to_send_buffer(buf, &msg);
-        write(sock, buf, sizeof(buf));
-        /* Send Status */
-        mavlink_msg_sys_status_pack(254, 1, &msg, 0, 0, 0, 500, 11000, -1, -1, 0, 0, 0, 0, 0, 0);
-        len = mavlink_msg_to_send_buffer(buf, &msg);
-        write(sock, buf, sizeof(buf));
         /*Send Mission*/
         gettimeofday(&stop, NULL);
         //4 Min Setup time
@@ -145,21 +135,11 @@ int main(int argc, char *argv[]) {
             mavlink_msg_mission_count_pack(254, 1, &msg, 1, 0, 2, MAV_MISSION_TYPE_MISSION);
             len = mavlink_msg_to_send_buffer(buf, &msg);
             write(sock, buf, BUFFER_LENGTH);
-            //Arm
-            //Mode Auto
-            //Genuine Dummy shit hours here on parameter custom mode
-            //mavlink_msg_set_mode_pack(254, 1, &msg, 1, 1, 10);
-            //len = mavlink_msg_to_send_buffer(buf, &msg);
-            //write(sock, buf, sizeof(buf));
             gettimeofday(&start, NULL);
         }
-
         memset(buf, 0, BUFFER_LENGTH);
         recsize = read(sock, buf, BUFFER_LENGTH);
         parse_recieved(buf, recsize, MAVLINK_COMM_0, sock);
-        //parse_recieved(buf, recsize, MAVLINK_COMM_1, sock);
-        //parse_recieved(buf, recsize, MAVLINK_COMM_2, sock);
-        //parse_recieved(buf, recsize, MAVLINK_COMM_3, sock);
         memset(buf, 0, BUFFER_LENGTH);
         usleep(500);
     }
@@ -177,7 +157,7 @@ void parse_recieved(uint8_t* recieved, ssize_t rec_size, uint8_t chan, int sock)
     for (i = 0; i < rec_size; ++i) {
         //If CRC pass
         if (mavlink_parse_char(chan, recieved[i], &msg, &status)) {
-            // Packet received
+            // Mission Request recieved, so supply mission item
             if(msg.msgid == MAVLINK_MSG_ID_MISSION_REQUEST && !sent_flag){
                 memset(send_buf, 0, BUFFER_LENGTH);
                 mavlink_msg_mission_request_decode(&msg, &mission_request);
@@ -187,14 +167,15 @@ void parse_recieved(uint8_t* recieved, ssize_t rec_size, uint8_t chan, int sock)
                 len = mavlink_msg_to_send_buffer(send_buf, &msg);
                 write(sock, send_buf, BUFFER_LENGTH);
             }
+            // Vehicle ack's mission
             else if(msg.msgid == MAVLINK_MSG_ID_MISSION_ACK){
                 mavlink_msg_mission_ack_decode(&msg, &ack);
                 printf("ACK Result: %d\n", ack.type);
                 //If successful Tranmsmission Start mission
-                if(ack.type == 0 && !mission_flag){
-                    //mavlink_msg_set_mode_pack(254, 1, &msg, 1, 1, 10);
-                    //len = mavlink_msg_to_send_buffer(send_buf, &msg);
-                    //write(sock, send_buf, BUFFER_LENGTH);
+                if(ack.type == 0){
+                    mavlink_msg_set_mode_pack(254, 1, &msg, 1, 1, 10);
+                    len = mavlink_msg_to_send_buffer(send_buf, &msg);
+                    write(sock, send_buf, BUFFER_LENGTH);
                 }
                 if(sent_flag){
                     mission_flag = 0;
